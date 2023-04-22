@@ -1,0 +1,101 @@
+---
+title: "Week_1"
+author: "Philipp Meisinger"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+### First weeks exercises:
+
+Importiere den Datensatz "umsatzdaten_gekuerzt.csv", den Du über folgenden Link herunterladen kannst: <https://raw.githubusercontent.com/opencampus-sh/einfuehrung-in-data-science-und-ml/main/wetter.csv> Berechne die Gesamtdurchschnittstemperatur. Berechne die Durchschnittstemperatur für den Monat Juli. Vergleiche, ob die Monate Juli und Mai sich in ihrer Durchschnittstemperatur signifikant unterscheiden.
+
+```{r load data}
+library(tidyverse)
+data <- read.csv("inc/umsatzdaten_gekuerzt.csv")
+weather_data <- read.csv("inc/wetter.csv")
+
+# weather_data is a data_frame, which contains vectors. Vectors can be accessed by referencing the '$' syntax.
+
+```
+
+## Total mean temperature of weather:
+
+```{r}
+# Referencing the column 'Temperatur' of struct 'weather_data' by using '$':
+#  ´weather_data$Temperatur´
+# using mean() function to get average of values in column 'Temperatur':
+# The total average of temperature for the data set is: 
+mean(weather_data$Temperatur)
+
+```
+
+## Total mean temperature of weather in July:
+
+```{r}
+#Adding column 'month' to data set: 
+weather_data$Monat <- month(ymd(weather_data$Datum))
+
+# Filtering out values for 'July':
+weather_july <- dplyr::filter(weather_data, weather_data$Monat == 7)
+
+# Accessing the 'Temperatur' columns and calculating the average over it:
+mean_july <- mean(weather_july$Temperatur)
+
+```
+
+## Comparison between Mays' and Julys' temperatures, are they significantly different?
+Firstly, let's discuss, what 'significant' means in this context. A significance test can be made to ensure, that the result is of significance and is unlikely to occur in natural circumstances.
+We consider the entire data set we have for each month a sample of the globally existing data set of past or future values of temperature in these months. This way, we can determine our samplesize n.
+
+``` {r}
+# Firstly, let's select the month may just like we did with the month of July above:
+weather_may <- dplyr::filter(weather_data, weather_data$Monat == 5)
+
+# We can then calculate the average temperature of may:
+mean_may <- mean(weather_may$Temperatur)
+
+# Now we have both the average value of temperature of May and of July. Let's look at those values:
+print("This is the average temperature during the month of May: ")
+mean_may
+print("This is the average temperature during the month of July: ")
+mean_july
+
+# Secondly, we need to figure out, how spread out the data is around the mean. An average value of 50 may be consisting of 2 values, the first = 0, the second = 100. 100 / 2 = 50. The standard deviation would tell us, that the spread is very big in this example. Let's figure out what the spread is like for our examples:
+
+standard_deviation_may <- sd(weather_may$Temperatur, na.rm = TRUE)
+standard_deviation_may
+
+standard_deviation_july <- sd(weather_july$Temperatur, na.rm = TRUE)
+standard_deviation_july
+
+# The null-hypothesis here would be, that the both months have the same average temperatures. H_0 = May and July have the same average temperatures. H_1 = May and July have significantly different average temperatures. We will do this test by applying the t-test. In order to do that, we join both, so that we have a data set, which contains the Months (5 or 7) and lots of values for temperature corresponding to those month values.
+
+weather_may <- dplyr::select(weather_may, Temperatur, Monat)
+weather_july <- dplyr::select(weather_july, Temperatur, Monat)
+new_data <- dplyr::full_join(weather_july, weather_may, by = join_by(Monat, Temperatur))
+
+t.test(Temperatur ~ Monat, data = new_data)
+## Links for research on this topic:
+# https://www.youtube.com/watch?v=x1RFWHV2VUU
+# https://studyflix.de/statistik/t-test-1584
+# https://www.scribbr.de/statistik/standardabweichung/
+# https://www.statology.org/standard-deviation-in-r/
+
+
+# Let's see how accurate that is concerning the Confidence intervals being negative
+
+# Calculate Confidence Interval in R for Normal Distribution
+# Confidence Interval Statistics
+# 95 percent confidence interval so tails are .925
+
+mean <- mean_may
+stddev <- standard_deviation_may
+n <- 248
+error <- qnorm(0.975)*stddev/sqrt(n)
+error
+lower_bound <- mean - error
+lower_bound
+upper_bound <- mean + error
+upper_bound
+
+```
