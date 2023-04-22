@@ -74,12 +74,19 @@ weather_may <- dplyr::select(weather_may, Temperatur, Monat)
 weather_july <- dplyr::select(weather_july, Temperatur, Monat)
 new_data <- dplyr::full_join(weather_july, weather_may, by = join_by(Monat, Temperatur))
 
+# If we want to be extremely accurate, we'd check our assumption, that the sample is 'normally distributed' (Normalverteilung):
+# shapiro.test(new_data$Temperatur)
+
 t.test(Temperatur ~ Monat, data = new_data)
+
+
 ## Links for research on this topic:
 # https://www.youtube.com/watch?v=x1RFWHV2VUU
 # https://studyflix.de/statistik/t-test-1584
 # https://www.scribbr.de/statistik/standardabweichung/
 # https://www.statology.org/standard-deviation-in-r/
+# https://www.youtube.com/watch?v=p_NsoIXSC2s
+# https://www.datanovia.com/en/lessons/t-test-in-r/
 
 
 # Let's see how accurate that is concerning the Confidence intervals being negative
@@ -97,5 +104,22 @@ lower_bound <- mean - error
 lower_bound
 upper_bound <- mean + error
 upper_bound
+
+# Just for fun we are going to calculate the variance (Varianz) of both data sets.
+
+variance_may <- standard_deviation_may^2
+variance_may
+
+variance_july <- standard_deviation_july^2
+variance_july
+
+### Now this doesn't seem to align with the Confidence intervals of the upper calculation. Instead, we are going to look at only one population, which is the data from July and then see, if the sample (mean_may) can be explained by that distribution.
+
+t.test(weather_july$Temperatur, mu = mean_may, data = weather_july)
+
+t.test(weather_may$Temperatur, mu = mean_july, data = weather_may)
+
+## That looks more like it!! 
+# We now can say, that the null hypothesis can be denied and we can assume (for now) that our hypothesis (H_1) stands true. There is a statistically significant difference in the average temperatures of may and july from this data set.
 
 ```
