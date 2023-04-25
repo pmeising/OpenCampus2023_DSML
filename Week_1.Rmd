@@ -40,14 +40,14 @@ weather_july <- dplyr::filter(weather_data, weather_data$Monat == 7)
 
 # Accessing the 'Temperatur' columns and calculating the average over it:
 mean_july <- mean(weather_july$Temperatur)
-
+mean_july
 ```
 
 ## Comparison between Mays' and Julys' temperatures, are they significantly different?
-Firstly, let's discuss, what 'significant' means in this context. A significance test can be made to ensure, that the result is of significance and is unlikely to occur in natural circumstances.
-We consider the entire data set we have for each month a sample of the globally existing data set of past or future values of temperature in these months. This way, we can determine our samplesize n.
 
-``` {r}
+Firstly, let's discuss, what 'significant' means in this context. A significance test can be made to ensure, that the result is of significance and is unlikely to occur in natural circumstances. We consider the entire data set we have for each month a sample of the globally existing data set of past or future values of temperature in these months. This way, we can determine our samplesize n.
+
+```{r}
 # Firstly, let's select the month may just like we did with the month of July above:
 weather_may <- dplyr::filter(weather_data, weather_data$Monat == 5)
 
@@ -89,7 +89,7 @@ t.test(Temperatur ~ Monat, data = new_data)
 
 ```
 
-``` {r}
+```{r}
 # Let's see how accurate that is concerning the Confidence intervals being negative
 
 # Calculate Confidence Interval in R for Normal Distribution
