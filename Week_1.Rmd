@@ -79,7 +79,6 @@ new_data <- dplyr::full_join(weather_july, weather_may, by = join_by(Monat, Temp
 
 t.test(Temperatur ~ Monat, data = new_data)
 
-
 ## Links for research on this topic:
 # https://www.youtube.com/watch?v=x1RFWHV2VUU
 # https://studyflix.de/statistik/t-test-1584
@@ -88,7 +87,9 @@ t.test(Temperatur ~ Monat, data = new_data)
 # https://www.youtube.com/watch?v=p_NsoIXSC2s
 # https://www.datanovia.com/en/lessons/t-test-in-r/
 
+```
 
+``` {r}
 # Let's see how accurate that is concerning the Confidence intervals being negative
 
 # Calculate Confidence Interval in R for Normal Distribution
