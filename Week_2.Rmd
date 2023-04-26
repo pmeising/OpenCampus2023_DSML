@@ -1,0 +1,202 @@
+---
+title: "Week_2"
+author: "Philipp Meisinger"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+Erstellt ein R-Notebook, das
+den Datensatz "umsatzdaten_gekuerzt.csv" importiert
+mit Hilfe eines Balkendiagramms über alle Warengruppen hinweg den Zusammenhang der durschnittlichen Umsätze je Wochentag darstellt
+Benutzt für den Beginn des Programms wenn Ihr möchtet diesen Programmcode als Starthilfe.
+
+Fügt in einem zweiten Schritt zusätzlich Konfidenzintervalle der Umsätze je Wochentag hinzu. Lese Dir dazu das in der R Graph Gallery („barplot with error bars“) dargestellte Vorgehen durch und passe es auf den Datensatz mit den Umsatzdaten an.
+
+Als zusätzliche (optionale) Aufgabe könnt Ihr versuchen, die Umsätze je Wochentag getrennt nach Warengruppe darzustellen (ein eigenes Balkendiagramm je Warengruppe), um einen genaueren Einblick in die Daten zu erhalten.
+
+Installiert bitte die Versionierungssoftware "git" auf Eurem Rechner: https://git-scm.com/downloads
+Um zu kontrollieren, ob die Installation von Git auch korrekt von RStudio erkannt wurde, kannst Du in RStudio (nach Neustart von RStudio) unter Tools > Version Control gehen und dort git als Version Control System für Dein Projekt auswählen (siehe auch Screenshots unten am Ende). Achte dabei darauf, dass Dein Projekt auch geöffnet ist - Du erkennst es an der Anzeige oben rechts.
+Falls git dort nicht auswählbar sein sollte, gehe in RStudio zu Tools > Global Options > Git/SVN und überprüfe, ob in dem Eingabefeld zu „Git executable“ der richtige Verweis eingetragen ist. Der Verweis sollte eine der folgenden Formen haben:
+Mac und Linux: /usr/bin/git
+
+Als Einführung in die Versionierung mit git absolviert bitte das Kapitel "Basic Workflow" des Kurses Introduction to Git bei Datacamp.
+
+Die Aufgaben sind noch einmal recht arbeitsintensiv, daher fangt am besten rechtzeitig vor dem Termin in der nächsten Woche damit an.
+
+Sections that are prefixed with * and suffixed with * are written by Chat-GPT.
+
+# Import Data 'umsatzdaten_gekuerzt.csv'
+```{r}
+library(tidyverse)
+
+umsatz_data <- read_csv("inc/umsatzdaten_gekuerzt.csv")
+
+```
+
+## The first Bar-plot simply shows the 'Warengruppe' and their 'Umsatz' in a Scatter-Plot.
+
+```{r}
+ggplot(umsatz_data, aes(x = Warengruppe, y = Umsatz)) + geom_point()
+
+```
+## Now the taks says, that we are supposed to depict the average revenue per weekday. For that to be possible, we need to insert another column into the dataframe, which contains the weekday of the date that is given. We are using the piping operator %>% of the dplyr package and reading in the data frame again.
+
+```{r}
+
+umsatz_data <- read_csv("inc/umsatzdaten_gekuerzt.csv") %>%
+  mutate(Wochentag = weekdays(as.Date(Datum, "%d.%m.%Y")))
+
+```
+
+## We can go ahead and try to do the same plot as above, just replacing the x achsis with the "Wochentag" variable.
+```{r}
+ggplot(umsatz_data, aes(x = Wochentag, y = Umsatz)) + geom_point()
+
+```
+## I am not happy with this plot, as it orderes the weekdays all weirdly. Chat-GPT gave me a solution for this, let's try it:
+```{r}
+
+umsatz_data <- read_csv("inc/umsatzdaten_gekuerzt.csv") %>%
+  mutate(Wochentag = factor(weekdays(as.Date(Datum, "%d.%m.%Y")), 
+                            levels = c("Monday", "Tuesday", "Wednesday", 
+                                       "Thursday", "Friday", "Saturday", 
+                                       "Sunday")))
+
+ggplot(umsatz_data, aes(x = Wochentag, y = Umsatz)) + 
+  geom_point()
+
+```
+That's great! This looks much better already! Conveniently ordered in our accustomed manner of Monday through Sunday. Let's see, if we can make this into a barplot as well.
+```{r}
+plot_bar <- ggplot(umsatz_data, aes(x = Wochentag, y = Umsatz))+ geom_bar()
+plot_bar
+
+```
+This doesn't really work. Hm, let's ask out friend once more:
+
+```{r}
+plot_bar_1 <- ggplot(umsatz_data, aes(x = Wochentag, y = Umsatz)) + 
+  geom_bar(stat = "summary", fun.y = sum)
+plot_bar_1
+
+# * # The fun.y argument in geom_bar() is used to specify the summary function to be used to aggregate the data for each group.
+
+# By default, fun.y is set to "identity", which means that the values of the y variable (i.e., Umsatz in this case) are used directly as the heights of the bars. However, in most cases, you will want to calculate a summary statistic of the y variable for each group, such as the mean, median, sum, etc.
+
+#You can specify any summary function that you like using the fun.y argument. The function should take a vector of values and return a single summary value. For example, sum, mean, median, max, min, etc. are all valid summary functions.
+
+#In the case of the bar plot we just created, we specified fun.y = sum, which means that the values of Umsatz for each weekday are summed up to create the bar heights. This is useful when you want to show the total amount of sales for each weekday, rather than the count of observations. *
+# plot_bar_2 <- ggplot(umsatz_data, aes(x = Wochentag, y = Umsatz)) + geom_bar(stat = "summary")
+# plot_bar_2
+```
+Looks much better! How about Chat-GPT explains the Confidence intervals to us?
+
+* A confidence interval is a range of values that is likely to contain the true value of a population parameter with a certain degree of confidence. In the context of statistical inference, the population parameter might be the mean, median, proportion, or some other summary statistic of a population.
+
+For example, let's say that you want to estimate the average amount of sales per weekday for a certain product. You collect a sample of data and calculate the mean amount of sales for each weekday. However, the sample means are likely to be different from the true population mean, simply due to random variation in the data. A confidence interval gives you a range of plausible values for the population mean, based on the sample data and a certain level of confidence.
+
+To calculate a confidence interval, you need to specify a confidence level, which is a probability between 0 and 1 that the true parameter value falls within the interval. A common choice is 95% confidence, which means that you expect the true parameter value to be within the interval 95% of the time if you repeat the sampling procedure many times.
+
+There are different methods for calculating confidence intervals, depending on the type of data and the assumptions you make about the distribution of the data. In general, you can use the standard error of the sample statistic (e.g., the standard error of the mean) and the t-distribution or the normal distribution to calculate the interval. The formula for the confidence interval depends on the method you use and the sample size.*
+
+Sounds reasonable! Let's get that code included into our case. (btw. notice how Chat GPT already aligns the information to our example of a sales data per weekday? Crazy, right?)
+```{r}
+# * # Calculate mean and standard error for each weekday
+umsatz_summary <- umsatz_data %>%
+  group_by(Wochentag) %>%
+  summarise(mean = mean(Umsatz),
+            se = sd(Umsatz) / sqrt(n()))
+
+# Add error bars to bar plot
+plot_bar_3 <- ggplot(umsatz_summary, aes(x = Wochentag, y = mean)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  geom_errorbar(aes(ymin = mean - 1.96*se, ymax = mean + 1.96*se), width = 0.4)
+plot_bar_3
+# *
+# * In this code, we first use group_by() and summarise() to calculate the mean and standard error of Umsatz for each weekday. We then use geom_errorbar() to add error bars to the plot. The ymin and ymax arguments in geom_errorbar() specify the lower and upper bounds of the confidence interval, respectively, using a multiplier of 1.96 times the standard error to represent the 95% confidence interval. The width argument controls the width of the error bars. *
+
+```
+
+# Statistical conditions met?
+Chat GPT does provide a list of conditions to be met before we can assume this calculation to be correct.
+* 
+To calculate confidence intervals for means using the t-distribution, the following conditions should be met:
+
+1. Random sampling: The data should be a random sample from the population of interest, or at least be a representative sample if it's not possible to obtain a truly random sample.
+
+2. Independence: Each observation in the sample should be independent of all other observations in the sample.
+
+3. Sample size: The sample size should be large enough to ensure that the sample mean follows an approximately normal distribution. A general rule of thumb is that the sample size should be at least 30.
+
+4. Normality: The population should be approximately normally distributed or the sample size should be large enough to assume normality due to the central limit theorem. If the sample size is less than 30 and the data are not normally distributed, a non-parametric method such as bootstrapping should be used to calculate confidence intervals.
+* 
+
+Random sampling ~; representative - check
+Independence assumed;
+Sample size: >30;
+Normality is assumed, let's confirm that:
+```{r}
+# *
+sample_data <- umsatz_data[sample(nrow(umsatz_data), 5000),]
+shapiro.test(sample_data$Umsatz)
+# *
+
+```
+# ooooooh that is bad, normality can not be assumed... Let's double-check with a Histogram:
+```{r}
+# *
+plot_his <- ggplot(umsatz_data, aes(x = Umsatz)) + 
+  geom_histogram(binwidth = 25)
+plot_his
+
+plot_his_1 <- ggplot(umsatz_data, aes(x = Umsatz)) + 
+  geom_histogram(binwidth = 50, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Umsatz", x = "Umsatz", y = "Count")
+plot_his_1
+
+# * 
+```
+
+Indeed, our data is not normally distributed, it is right scewed. Which is the best approximation for accurate values. Maybe bootstrapping works better here.
+```{r}
+# *
+# Function to calculate mean and confidence interval using bootstrap method
+bootstrap_mean_ci <- function(data, alpha = 0.05, n_bootstraps = 1000) {
+  # Calculate the mean of the original data
+  mean_orig <- mean(data, na.rm = TRUE)
+  
+  # Bootstrap resampling
+  boot_means <- numeric(n_bootstraps)
+  for (i in seq_len(n_bootstraps)) {
+    boot_data <- sample(data, size = length(data), replace = TRUE)
+    boot_means[i] <- mean(boot_data, na.rm = TRUE)
+  }
+  
+  # Calculate confidence interval
+  ci <- quantile(boot_means, c(alpha/2, 1-alpha/2))
+  
+  # Return the mean and confidence interval
+  return(list(mean = mean_orig, ci = ci))
+}
+
+# Calculate mean and confidence interval for each weekday
+umsatz_data_summary <- umsatz_data %>%
+  group_by(Wochentag) %>%
+  summarize(umsatz_mean = mean(Umsatz, na.rm = TRUE),
+            umsatz_ci = bootstrap_mean_ci(Umsatz)$ci)
+
+# Create bar plot with error bars
+ggplot(umsatz_data_summary, aes(x = Wochentag, y = umsatz_mean)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  geom_errorbar(aes(ymin = umsatz_ci[1], ymax = umsatz_ci[2]), 
+                width = 0.2, size = 1, color = "black") +
+  labs(x = "Wochentag", y = "Umsatz")
+# *
+```
+
+
+
+
+
+
+
