@@ -1,0 +1,16 @@
+---
+title: "Week_3"
+author: "Philipp Meisinger"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+umsatz_data <- read_csv("inc/umsatzdaten_gekuerzt.csv") %>%
+  mutate(Wochentag = factor(weekdays(as.Date(Datum, "%d.%m.%Y")), 
+                            levels = c("Monday", "Tuesday", "Wednesday", 
+                                       "Thursday", "Friday", "Saturday", 
+                                       "Sunday")))
+ggplot(umsatz_data, aes(x = Umsatz)) + geom_histogram()
+```
