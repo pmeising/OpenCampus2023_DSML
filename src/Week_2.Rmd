@@ -320,6 +320,10 @@ bar_plots
 ```
 
 ```{r}
+
+```
+
+```{r}
 # create a list of dataframes for each day of the week
 data_list <- split(umsatz_data, umsatz_data$Wochentag)
 

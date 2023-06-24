@@ -1,0 +1,128 @@
+
+
+
+```{r include=FALSE}
+if (!requireNamespace("reticulate", quietly = TRUE)) {
+  install.packages("reticulate")
+}
+
+# Create list with required libraries
+libraries <- c("dplyr", "readr", "reticulate", "ggplot2", "Metrics", "tidyverse", "glmnet", "e1071", "lubridate")
+
+
+# Loop through each library and check if it's installed, if not, install it and then load it to include in this project
+for (lib in libraries)
+{
+  if (!require(lib, character.only = TRUE))
+  {
+    install.packages(lib)
+    library(lib, character.only = TRUE)
+  }
+}
+```
+
+
+The following piece of code does not have to be run repeatedly, only initial run is required.
+```{r include=FALSE}
+
+# Custom function to check if a Conda environment exists
+#condaenv_exists <- function(env_name) {
+#  conda_envs <- conda_list()
+#  return(env_name %in% conda_envs$name)
+#}
+
+# Check if conda is installed, if not, install miniconda
+#conda_envs <- conda_list()
+#if (length(conda_envs) == 0) {
+#  install_miniconda()
+#}
+
+# Create a specific Python environment if it doesn't exist
+#if (!condaenv_exists("r-reticulate")) {
+#  conda_create("r-reticulate", python_version = "3.8")
+#}
+
+# Get the list of installed packages in the created environment
+# conda_envs <- conda_list()
+# r_reticulate_env <- conda_envs[conda_envs$name == "r-reticulate", ]
+# installed_packages <- r_reticulate_env$packages
+
+# Install required packages in the created environment
+# required_packages <- c("pandas", "numpy", "tensorflow", "h5py")
+#
+# for (pkg in required_packages) {
+#   if (!(pkg %in% installed_packages)) {
+#     conda_install("r-reticulate", pkg)
+#   }
+# }
+
+# If this doesn't install 'tensorflow', go ahead and download anaconda from "https://www.anaconda.com/", open it up, go to environment and choose "r-reticulate". Then install the packages " "pandas", "numpy", "tensorflow", "h5py" " from the UI.
+# Error associated with this fix:
+# 'InvalidArchiveError("Error with archive C:\\Users\\ [...] \\\compose_set_interface.h.inc'")'
+```
+
+
+Read in the prepared data set as variable 'df'
+```{r}
+
+df <- read_csv("../data/data_clean.csv", show_col_types = FALSE)
+
+```
+
+
+Splitting the data set into Training, Validation and Test data sets.
+The test data set is fixed, as the time frame we want to predict is a given parameter. For the Training and validation sets, we chose roughly an 80 - 20 distribution.
+```{r include=FALSE}
+
+train_data <- subset(df, Datum >= "2013-07-01" & Datum <= "2018-03-31")
+
+validation_data <- subset(df, Datum >= "2018-04-01" & Datum <= "2019-06-08")
+
+test_data <- subset(df, Datum >= "2019-06-09" & Datum <= "2019-07-30")
+
+# Check the dimensions of the data sets
+cat("Training dataset dimensions:", dim(train_data), "\n")
+cat("Validation dataset dimensions:", dim(validation_data), "\n")
+cat("Test dataset dimensions:", dim(test_data), "\n")
+
+```
+
+### LR Beispiel einer einfachen linearen Regression
+
+```{r include=FALSE}
+
+mod <- lm(Umsatz ~ Datum + Datum * Temperatur + as.factor(Warengruppe) + as.factor(Wochentag) + as.logical(FerienSH) + Temperatur + as.logical(KielerWoche) + Bewoelkung + Windgeschwindigkeit +  as.factor(Monat) + as.factor(Monat) * Temperatur + Windgeschwindigkeit * Temperatur, df)
+     summary(mod)
+    
+```
+
+
+Preparing the data set for the prediction request.
+```{r include=FALSE}
+
+# Make predictions using the test data
+prediction_temp <- read.csv("../data/prediction_template.csv")
+
+prediction_temp$predicted <- predict(mod, newdata = test_data)
+
+prediction_temp <- select(prediction_temp, -Umsatz)
+
+prediction_temp <- prediction_temp %>%
+  rename(Umsatz = predicted)
+
+```
+
+```{r}
+library(httr)
+
+predictions <- prediction_temp
+
+name <- "Gruppe 11"
+
+# Execution of the request
+r <- POST("https://bakery-sales-mape-tolicqztoq-ey.a.run.app/", 
+          body = list(name=name, predictions=predictions),
+          encode = "json")
+# Output of MAPE in Percent
+content(r, "parsed", "application/json")
+```
